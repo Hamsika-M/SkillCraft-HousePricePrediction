@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HomeValue AI — House Price Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --cream: #f5f0e8;
+      --warm-white: #faf8f3;
+      --charcoal: #1a1a1a;
+      --brown: #8b5e3c;
+      --gold: #c9a84c;
+      --gold-light: #e8d08a;
+      --rust: #c0533a;
+      --sage: #6b7f5e;
+      --shadow: rgba(26,26,26,0.12);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--cream);
+      color: var(--charcoal);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-left {
+      background: var(--charcoal);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 80px 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-left::after {
+      content: '';
+      position: absolute;
+      right: -60px;
+      top: 0;
+      width: 120px;
+      height: 100%;
+      background: var(--charcoal);
+      clip-path: polygon(0 0, 50% 0, 100% 50%, 50% 100%, 0 100%);
+      z-index: 2;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(201,168,76,0.15);
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      width: fit-content;
+      margin-bottom: 32px;
+      animation: fadeUp 0.8s ease both;
+    }
+
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(42px, 5vw, 72px);
+      font-weight: 900;
+      color: var(--warm-white);
+      line-height: 1.05;
+      margin-bottom: 24px;
+      animation: fadeUp 0.8s 0.1s ease both;
+    }
+
+    .hero-title span { color: var(--gold); display: block; }
+
+    .hero-sub {
+      color: rgba(245,240,232,0.6);
+      font-size: 16px;
+      line-height: 1.7;
+      max-width: 380px;
+      margin-bottom: 48px;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+
+    .hero-stats {
+      display: flex;
+      gap: 40px;
+      animation: fadeUp 0.8s 0.3s ease both;
+    }
+
+    .stat { text-align: center; }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .stat-label {
+      font-size: 11px;
+      color: rgba(245,240,232,0.5);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 4px;
+    }
+
+    .hero-right {
+      background: var(--warm-white);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 60px 80px 100px;
+      position: relative;
+    }
+
+    .hero-illustration {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.04;
+      background-image: repeating-linear-gradient(
+        45deg,
+        var(--charcoal) 0,
+        var(--charcoal) 1px,
+        transparent 0,
+        transparent 50%
+      );
+      background-size: 20px 20px;
+    }
+
+    /* ── PREDICTOR CARD ── */
+    .predictor-card {
+      background: white;
+      border-radius: 24px;
+      padding: 48px 40px;
+      box-shadow: 0 20px 60px var(--shadow), 0 4px 16px var(--shadow);
+      width: 100%;
+      max-width: 460px;
+      position: relative;
+      z-index: 1;
+      animation: fadeUp 0.8s 0.2s ease both;
+    }
+
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .card-sub {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 36px;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .input-group label .icon {
+      font-size: 14px;
+    }
+
+    .input-wrap {
+      position: relative;
+    }
+
+    .input-wrap input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      background: #eee;
+      border-radius: 4px;
+      outline: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .input-wrap input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--charcoal);
+      border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .input-wrap input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .range-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .range-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--charcoal);
+    }
+
+    .range-minmax {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #bbb;
+      margin-top: 4px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #f0f0f0;
+      margin: 28px 0;
+    }
+
+    .predict-btn {
+      width: 100%;
+      padding: 18px;
+      background: var(--charcoal);
+      color: var(--warm-white);
+      border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .predict-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: var(--gold);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.5s ease, height 0.5s ease;
+    }
+
+    .predict-btn:hover::before {
+      width: 400px;
+      height: 400px;
+    }
+
+    .predict-btn span { position: relative; z-index: 1; }
+
+    .predict-btn:hover { color: var(--charcoal); }
+
+    /* ── RESULT ── */
+    .result-box {
+      margin-top: 24px;
+      padding: 28px;
+      background: linear-gradient(135deg, var(--charcoal) 0%, #2d2d2d 100%);
+      border-radius: 16px;
+      display: none;
+      animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    .result-box.show { display: block; }
+
+    .result-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .result-price {
+      font-family: 'Playfair Display', serif;
+      font-size: 42px;
+      font-weight: 900;
+      color: white;
+      line-height: 1;
+    }
+
+    .result-range {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 8px;
+    }
+
+    .result-breakdown {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .breakdown-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .breakdown-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .breakdown-val {
+      font-size: 14px;
+      font-weight: 500;
+      color: white;
+    }
+
+    .breakdown-val.pos { color: var(--gold-light); }
+    .breakdown-val.neg { color: #e07070; }
+
+    /* ── FEATURES SECTION ── */
+    .features {
+      padding: 100px 60px;
+      background: var(--warm-white);
+    }
+
+    .section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: var(--gold);
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(32px, 4vw, 52px);
+      font-weight: 700;
+      max-width: 600px;
+      line-height: 1.15;
+      margin-bottom: 60px;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 32px;
+    }
+
+    .feature-card {
+      background: white;
+      border-radius: 20px;
+      padding: 36px 32px;
+      border: 1px solid #eee;
+      transition: all 0.3s ease;
+      cursor: default;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 40px var(--shadow);
+      border-color: var(--gold-light);
+    }
+
+    .feature-icon {
+      width: 52px;
+      height: 52px;
+      background: var(--cream);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .feature-name {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .feature-desc {
+      font-size: 14px;
+      color: #777;
+      line-height: 1.7;
+    }
+
+    .feature-coef {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 5px 12px;
+      border-radius: 50px;
+    }
+
+    .feature-coef.pos { background: #edf7f0; color: var(--sage); }
+    .feature-coef.neg { background: #fdf0ee; color: var(--rust); }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      padding: 100px 60px;
+      background: var(--charcoal);
+      color: var(--warm-white);
+    }
+
+    .how .section-title { color: var(--warm-white); }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 32px;
+      margin-top: 60px;
+    }
+
+    .step {
+      position: relative;
+      padding-top: 20px;
+    }
+
+    .step::before {
+      content: '';
+      position: absolute;
+      top: 36px;
+      left: 100%;
+      width: calc(100% - 24px);
+      height: 1px;
+      background: rgba(201,168,76,0.3);
+    }
+
+    .step:last-child::before { display: none; }
+
+    .step-num {
+      width: 52px;
+      height: 52px;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 24px;
+    }
+
+    .step-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: rgba(245,240,232,0.5);
+      line-height: 1.7;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      background: #111;
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+      padding: 32px;
+      font-size: 13px;
+    }
+
+    footer span { color: var(--gold); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-left::after { display: none; }
+      .hero-right { padding: 60px 30px; }
+      .features-grid { grid-template-columns: 1fr; }
+      .steps { grid-template-columns: 1fr 1fr; }
+      .step::before { display: none; }
+      .features, .how { padding: 60px 30px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="badge">✦ AI-Powered Estimation</div>
+    <h1 class="hero-title">
+      Predict Your
+      <span>Home's Value</span>
+      Instantly.
+    </h1>
+    <p class="hero-sub">
+      Built on a Linear Regression model trained on 1,460 real houses.
+      Adjust the sliders and get an instant price estimate.
+    </p>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num">1,460</div>
+        <div class="stat-label">Houses Trained</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">81</div>
+        <div class="stat-label">Features</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">80%</div>
+        <div class="stat-label">Accuracy</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <div class="hero-illustration"></div>
+
+    <div class="predictor-card">
+      <h2 class="card-title">Price Estimator</h2>
+      <p class="card-sub">Drag the sliders to match your home's details</p>
+
+      <!-- Living Area -->
+      <div class="input-group">
+        <label><span class="icon">📐</span> Living Area</label>
+        <div class="range-row">
+          <span class="range-value" id="sqft-val">1,500 sqft</span>
+        </div>
+        <div class="input-wrap">
+          <input type="range" id="sqft" min="500" max="5000" value="1500" step="50"
+            oninput="updateVal('sqft-val', this.value, ' sqft', true); predict()"/>
+        </div>
+        <div class="range-minmax"><span>500 sqft</span><span>5,000 sqft</span></div>
+      </div>
+
+      <!-- Bedrooms -->
+      <div class="input-group">
+        <label><span class="icon">🛏</span> Bedrooms</label>
+        <div class="range-row">
+          <span class="range-value" id="bed-val">3 beds</span>
+        </div>
+        <div class="input-wrap">
+          <input type="range" id="bedrooms" min="1" max="8" value="3" step="1"
+            oninput="updateVal('bed-val', this.value, ' beds', false); predict()"/>
+        </div>
+        <div class="range-minmax"><span>1</span><span>8</span></div>
+      </div>
+
+      <!-- Full Bathrooms -->
+      <div class="input-group">
+        <label><span class="icon">🚿</span> Full Bathrooms</label>
+        <div class="range-row">
+          <span class="range-value" id="fbath-val">2 full baths</span>
+        </div>
+        <div class="input-wrap">
+          <input type="range" id="fullbath" min="1" max="4" value="2" step="1"
+            oninput="updateVal('fbath-val', this.value, ' full baths', false); predict()"/>
+        </div>
+        <div class="range-minmax"><span>1</span><span>4</span></div>
+      </div>
+
+      <!-- Half Bathrooms -->
+      <div class="input-group">
+        <label><span class="icon">🪥</span> Half Bathrooms</label>
+        <div class="range-row">
+          <span class="range-value" id="hbath-val">1 half bath</span>
+        </div>
+        <div class="input-wrap">
+          <input type="range" id="halfbath" min="0" max="2" value="1" step="1"
+            oninput="updateVal('hbath-val', this.value, ' half bath', false); predict()"/>
+        </div>
+        <div class="range-minmax"><span>0</span><span>2</span></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <button class="predict-btn" onclick="predict(true)">
+        <span>✦ Calculate Price</span>
+      </button>
+
+      <!-- Result -->
+      <div class="result-box" id="result-box">
+        <div class="result-label">Estimated Market Value</div>
+        <div class="result-price" id="result-price">$0</div>
+        <div class="result-range" id="result-range">Range: $0 — $0</div>
+        <div class="result-breakdown">
+          <div class="breakdown-item">
+            <span class="breakdown-label">Base Price</span>
+            <span class="breakdown-val" id="b-base">$180,502</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">Living Area</span>
+            <span class="breakdown-val pos" id="b-sqft">+$0</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">Bedrooms</span>
+            <span class="breakdown-val neg" id="b-bed">−$0</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">Bathrooms</span>
+            <span class="breakdown-val pos" id="b-bath">+$0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FEATURES ══ -->
+<section class="features">
+  <div class="section-label">Model Insights</div>
+  <h2 class="section-title">What Drives Your Home's Price?</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">📐</div>
+      <div class="feature-name">Living Area</div>
+      <div class="feature-desc">The strongest predictor. Every additional square foot of living space significantly adds to a home's market value.</div>
+      <span class="feature-coef pos">+$53,440 per 1,000 sqft</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🛏</div>
+      <div class="feature-name">Bedrooms</div>
+      <div class="feature-desc">More bedrooms can slightly reduce price because they often mean smaller individual room sizes and shared space.</div>
+      <span class="feature-coef neg">−$21,777 per bedroom</span>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🚿</div>
+      <div class="feature-name">Full Bathrooms</div>
+      <div class="feature-desc">Full bathrooms with shower/tub are a strong positive signal — buyers consistently pay a premium for them.</div>
+      <span class="feature-coef pos">+$16,988 per bathroom</span>
+    </div>
+  </div>
+</section>
+
+<!-- ══ HOW IT WORKS ══ -->
+<section class="how">
+  <div class="section-label">The Process</div>
+  <h2 class="section-title">How the Model Works</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Data Collection</div>
+      <div class="step-desc">1,460 real houses with 81 features each from the Ames Housing Dataset.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Preprocessing</div>
+      <div class="step-desc">Features are scaled and normalized so the model can compare them fairly.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Training</div>
+      <div class="step-desc">Linear Regression learns the relationship between features and prices from 1,168 houses.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-title">Prediction</div>
+      <div class="step-desc">Your inputs are run through the model to produce an instant price estimate.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  Built with <span>♥</span> using Linear Regression · Trained on Ames Housing Dataset · SkillCraft Internship Task 01
+</footer>
+
+<script>
+  // ── FLASK API URL ──
+  const API_URL = 'http://127.0.0.1:5000/predict';
+
+  // ── Fallback coefficients (used if Flask is not running) ──
+  const INTERCEPT = 180502.22;
+  const COEF_SQFT = 53440.16 / 1000;
+  const COEF_BED  = -21777.09;
+  const COEF_FBATH = 16988.85;
+  const COEF_HBATH = 2318.34;
+
+  function updateVal(id, val, suffix, format) {
+    const el = document.getElementById(id);
+    el.textContent = format
+      ? Number(val).toLocaleString() + suffix
+      : val + suffix;
+  }
+
+  function fmt(n) {
+    return '$' + Math.abs(Math.round(n)).toLocaleString();
+  }
+
+  let predicted = false;
+
+  // ── Show loading state on button ──
+  function setLoading(on) {
+    const btn = document.querySelector('.predict-btn span');
+    btn.textContent = on ? '⏳ Predicting...' : '✦ Calculate Price';
+  }
+
+  // ── Show status message ──
+  function showStatus(msg, color) {
+    let el = document.getElementById('api-status');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'api-status';
+      el.style.cssText = `
+        font-size: 12px; margin-top: 10px; padding: 8px 14px;
+        border-radius: 8px; text-align: center; font-weight: 500;
+      `;
+      document.querySelector('.predict-btn').after(el);
+    }
+    el.textContent = msg;
+    el.style.background = color === 'green' ? '#edf7f0' : '#fdf0ee';
+    el.style.color = color === 'green' ? '#4a7c59' : '#c0533a';
+  }
+
+  // ── Local fallback prediction ──
+  function localPredict(sqft, bedrooms, fullbath, halfbath) {
+    const sqftC  = COEF_SQFT * sqft;
+    const bedC   = COEF_BED  * bedrooms;
+    const fbathC = COEF_FBATH * fullbath;
+    const hbathC = COEF_HBATH * halfbath;
+    const price  = INTERCEPT + sqftC + bedC + fbathC + hbathC;
+    return {
+      price,
+      low:   price * 0.92,
+      high:  price * 1.08,
+      sqftC, bedC, fbathC, hbathC,
+      fromAPI: false
+    };
+  }
+
+  // ── Show result on page ──
+  function showResult(data, sqftC, bedC, bathC) {
+    predicted = true;
+    const box = document.getElementById('result-box');
+    box.classList.add('show');
+
+    document.getElementById('result-range').textContent =
+      `Range: ${fmt(data.low)} — ${fmt(data.high)}`;
+    document.getElementById('b-base').textContent  = fmt(INTERCEPT);
+    document.getElementById('b-sqft').textContent  = '+' + fmt(sqftC);
+    document.getElementById('b-bed').textContent   = (bedC < 0 ? '−' : '+') + fmt(bedC);
+    document.getElementById('b-bath').textContent  = '+' + fmt(bathC);
+
+    animatePrice(data.price);
+  }
+
+  // ── Main predict function ──
+  async function predict(manual = false) {
+    const sqft     = parseFloat(document.getElementById('sqft').value);
+    const bedrooms = parseFloat(document.getElementById('bedrooms').value);
+    const fullbath = parseFloat(document.getElementById('fullbath').value);
+    const halfbath = parseFloat(document.getElementById('halfbath').value);
+
+    if (!manual && !predicted) return;
+
+    setLoading(true);
+
+    try {
+      // ── Try Flask API first ──
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sqft, bedrooms, fullbath, halfbath }),
+        signal: AbortSignal.timeout(3000) // 3 second timeout
+      });
+
+      if (!response.ok) throw new Error('API error');
+
+      const data = await response.json();
+
+      // Compute breakdown for display
+      const sqftC  = COEF_SQFT * sqft;
+      const bedC   = COEF_BED  * bedrooms;
+      const bathC  = COEF_FBATH * fullbath + COEF_HBATH * halfbath;
+
+      showResult(data, sqftC, bedC, bathC);
+      showStatus('✅ Live prediction from your trained model!', 'green');
+
+    } catch (err) {
+      // ── Fallback to local coefficients ──
+      const result = localPredict(sqft, bedrooms, fullbath, halfbath);
+      showResult(
+        { price: result.price, low: result.low, high: result.high },
+        result.sqftC,
+        result.bedC,
+        result.fbathC + result.hbathC
+      );
+      showStatus('⚠️ Flask not running — using built-in coefficients. Run: python app.py', 'red');
+    }
+
+    setLoading(false);
+  }
+
+  // ── Animate price number counting up ──
+  function animatePrice(target) {
+    const el = document.getElementById('result-price');
+    const duration = 800;
+    const startTime = performance.now();
+
+    function step(now) {
+      const elapsed  = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased    = 1 - Math.pow(1 - progress, 3);
+      el.textContent = '$' + Math.round(target * eased).toLocaleString();
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ── Animate range slider fill ──
+  document.querySelectorAll('input[type="range"]').forEach(input => {
+    function updateFill() {
+      const pct = (input.value - input.min) / (input.max - input.min) * 100;
+      input.style.background =
+        `linear-gradient(to right, #1a1a1a ${pct}%, #eee ${pct}%)`;
+    }
+    input.addEventListener('input', updateFill);
+    updateFill();
+  });
+</script>
+</body>
+</html>
