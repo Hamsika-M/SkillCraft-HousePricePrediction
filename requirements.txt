@@ -3,5 +3,7 @@ joblib
 scikit-learn
 numpy
 pandas
+matplotlib
+seaborn
 flask
 flask-cors
