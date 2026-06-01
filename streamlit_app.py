@@ -1,160 +1,42 @@
-# app.py — Complete House Price Prediction Website
-
 import streamlit as st
-import pandas as pd
-import numpy as np
 import joblib
-import matplotlib.pyplot as plt
-import seaborn as sns
+import numpy as np
 
-# ═══════════════════════════════════
-# PAGE CONFIGURATION
-# ═══════════════════════════════════
-st.set_page_config(
-    page_title="House Price Predictor",
-    page_icon="🏠",
-    layout="wide"
-)
+st.set_page_config(page_title="HomeValue AI", page_icon="🏠", layout="centered")
 
-# ═══════════════════════════════════
-# TITLE SECTION
-# ═══════════════════════════════════
-st.title("🏠 House Price Prediction App")
-st.markdown("### SkillCraft Technology Internship — Task 01")
-st.markdown("---")
-
-# ═══════════════════════════════════
-# LOAD TRAINED MODEL
-# ═══════════════════════════════════
 @st.cache_resource
 def load_model():
-    model = joblib.load('linear_regression_model.pkl')
+    model  = joblib.load('linear_regression_model.pkl')
     scaler = joblib.load('scaler.pkl')
     return model, scaler
 
 model, scaler = load_model()
 
-# ═══════════════════════════════════
-# SIDEBAR — USER INPUT
-# ═══════════════════════════════════
-st.sidebar.header("🏡 Enter House Details")
+st.title("🏠 HomeValue AI")
+st.subheader("House Price Predictor")
+st.write("Built on Linear Regression trained on 1,460 real houses")
+st.divider()
 
-sqft = st.sidebar.slider(
-    "Square Footage",
-    min_value=500,
-    max_value=5000,
-    value=1500,
-    step=100
-)
+sqft     = st.slider("Living Area (sqft)", 500,  5000, 1500, 50)
+bedrooms = st.slider("Bedrooms",             1,     8,    3,  1)
+fullbath = st.slider("Full Bathrooms",       1,     4,    2,  1)
+halfbath = st.slider("Half Bathrooms",       0,     2,    1,  1)
 
-bedrooms = st.sidebar.selectbox(
-    "Number of Bedrooms",
-    options=[1, 2, 3, 4, 5, 6],
-    index=2
-)
+st.divider()
 
-fullbath = st.sidebar.selectbox(
-    "Full Bathrooms",
-    options=[1, 2, 3, 4],
-    index=1
-)
+if st.button("✦ Calculate Price", use_container_width=True):
+    features = np.array([[sqft, bedrooms, fullbath, halfbath]])
+    features_scaled = scaler.transform(features)
+    price = model.predict(features_scaled)[0]
 
-halfbath = st.sidebar.selectbox(
-    "Half Bathrooms",
-    options=[0, 1, 2],
-    index=0
-)
+    st.success(f"### Estimated Price: ${price:,.0f}")
+    st.info(f"Price Range: ${price*0.92:,.0f} — ${price*1.08:,.0f}")
 
-# ═══════════════════════════════════
-# PREDICTION
-# ═══════════════════════════════════
-if st.sidebar.button("🔮 Predict Price", 
-                      use_container_width=True):
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("Base Price",  "$180,502")
+    col2.metric("Living Area", f"+${53440.16 * sqft/1000:,.0f}")
+    col3.metric("Bedrooms",    f"${-21777.09 * bedrooms:,.0f}")
+    col4.metric("Bathrooms",   f"+${16988.85 * fullbath + 2318.34 * halfbath:,.0f}")
 
-    # Prepare input
-    input_data = pd.DataFrame({
-        'GrLivArea': [sqft],
-        'BedroomAbvGr': [bedrooms],
-        'FullBath': [fullbath],
-        'HalfBath': [halfbath]
-    })
-
-    # Scale and predict
-    input_scaled = scaler.transform(input_data)
-    predicted_price = model.predict(input_scaled)[0]
-
-    # Show result
-    st.markdown("## 🎯 Prediction Result")
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        st.metric(
-            label="Predicted Price",
-            value=f"${predicted_price:,.0f}"
-        )
-    with col2:
-        st.metric(
-            label="Price per sqft",
-            value=f"${predicted_price/sqft:,.0f}"
-        )
-    with col3:
-        st.metric(
-            label="House Size",
-            value=f"{sqft} sqft"
-        )
-
-# ═══════════════════════════════════
-# TABS — Model Info & Visualizations
-# ═══════════════════════════════════
-tab1, tab2, tab3 = st.tabs([
-    "📊 Model Performance",
-    "📈 Visualizations",
-    "ℹ️ About"
-])
-
-with tab1:
-    st.header("Model Performance Metrics")
-
-    col1, col2, col3 = st.columns(3)
-    col1.metric("R² Score", "0.75", "Good")
-    col2.metric("MAE", "$25,430", "Average Error")
-    col3.metric("RMSE", "$35,210", "Root Mean Error")
-
-    st.info("""
-    **What these mean:**
-    - R² of 0.75 means model explains 75% of price variation
-    - On average predictions are off by $25,430
-    - Model trained on 1168 houses, tested on 292 houses
-    """)
-
-with tab2:
-    st.header("Data Visualizations")
-    # Add your saved plots here
-    st.image('images/actual_vs_predicted.png',
-             caption='Actual vs Predicted Prices')
-    st.image('images/correlation_heatmap.png',
-             caption='Feature Correlation')
-
-with tab3:
-    st.header("About This Project")
-    st.markdown("""
-    ### 🏠 House Price Prediction
-
-    **Task:** Implement a linear regression model to predict
-    house prices based on square footage, bedrooms and bathrooms.
-
-    **Dataset:** Kaggle House Prices Dataset (1460 houses)
-
-    **Algorithm:** Linear Regression
-
-    **Tech Stack:**
-    - Python
-    - Scikit-learn
-    - Pandas & NumPy
-    - Streamlit
-    - Matplotlib & Seaborn
-
-    **Intern:** Your Name
-    **Company:** SkillCraft Technology
-    """)
+st.divider()
+st.caption("Trained on Ames Housing Dataset · SkillCraft Internship Task 01")
